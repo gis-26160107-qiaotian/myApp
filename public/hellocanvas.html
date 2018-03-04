@@ -1,0 +1,21 @@
+<!DOCTYPE html>  
+<html lang="en">  
+<head>  
+    <meta charset="UTF-8">  
+    <title>绘制矩形</title>  
+</head>  
+<body>  
+    <canvas id="canvas" width="300" height="300"></canvas>  
+    <script type="text/javascript">  
+        var canvas=document.getElementById("canvas");  
+        var ctx=canvas.getContext("2d");  
+        //绘制  
+        ctx.fillStyle="#ff00000";  
+        ctx.strokeStyle="#0000ff";  
+        ctx.lineWidth=3;  
+        ctx.rect(20,20,240,240);  
+        ctx.fill();//填充  
+        ctx.stroke();//绘制边框  
+    </script>  
+</body>  
+</html>

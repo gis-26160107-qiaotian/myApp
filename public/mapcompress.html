@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html>
+<head>
+        <title>地图压缩</title>
+        <meta charset="UTF-8">
+
+        <body>
+            <p>地图压缩</p>
+            <br>
+            </div>
+            
+            <input type="file" id="input">
+            <br>
+            <br>
+            <input type="button" value="绘制" onclick="Draw()">
+            <br>
+            <br>
+            <input type="button" value="投影" onclick="Lanbert()">
+            <br>
+            <br>
+            <input type="button" value="压缩" onclick="Compress()">
+            <br>
+            <br>
+            <div>
+            <canvas id="canv" width="5000px" height="1000px"></canvas>
+            </div>
+        </body>
+
+ <script type="text/javascript">
+function Point(x,y)
+{
+    this.x=x;
+    this.y=y;
+}
+var A=new Array();
+var N=0;
+/*兰伯特参数*/
+var L0 = 105 * Math.PI / 180;//原点经度
+var B0 = 0;//原点纬度
+var B1 = 20 * Math.PI / 180;//第一标准纬线
+var B2 = 40 * Math.PI / 180;//第二标准纬线
+var a = 6378245;//长半轴
+var b = 6356863.01877;//短半轴
+var e1 = 0.006693421622966; //第一偏心率的平方
+var e2 = 0.006738525414684;//第二偏心率的平方
+function Draw(){   
+    
+    var inputfile = document.getElementById("input").files[0];
+    var reader = new FileReader();
+    reader.readAsText(inputfile);
+    reader.onload=function(e)
+    {   
+        var text=reader.result.split("\r\n");
+   
+     
+        A[N]=new Array();
+        var l=text.length;
+        var judge=0;
+        for(i=1;i<l-1;i++) 
+        {   
+            
+            if(text[i]!="END")
+            {   
+                if(text[i].length!=2 && text[i].length!=3 && text[i].length!=1)
+                {
+                var x;
+                var y;
+                x=text[i].split(",")[0];
+                y=text[i].split(",")[1];
+                A[N][judge]=new Point(x,y);
+                judge=judge+1;
+                }
+            }
+            else
+            {
+                judge=0;
+                N=N+1;
+                A[N]=new Array();
+            }
+        }
+        var canvas = document.getElementById("canv");
+        var cxt = canvas.getContext("2d");
+        cxt.clearRect(0, 0, 5000, 1000);
+        cxt.beginPath();
+        cxt.lineWidth = 2;
+        for(i=0;i<N+1;i++)
+        {   
+            var l=A[i].length;
+            for(j=0;j<l-1;j++)
+            {
+                 
+                cxt.moveTo((A[i][j].x)*10-500,600-(A[i][j].y)*10);
+                cxt.lineTo((A[i][j+1].x)*10-500,600-(A[i][j+1].y)*10);
+                
+            }
+        }
+        cxt.stroke();
+        
+    }
+}
+//兰伯特投影
+function Lanbert(){
+    var canvas = document.getElementById("canv");
+    var cxt = canvas.getContext("2d");
+    cxt.clearRect(0, 0, 5000, 1000);
+    cxt.beginPath();
+    cxt.lineWidth = 2;
+    var mb1 = Math.cos(B1) / Math.sqrt(1 - e1 * Math.pow(Math.sin(B1), 2));
+    var mb2 = Math.cos(B2) / Math.sqrt(1 - e1 * Math.pow(Math.sin(B2), 2));
+    var tb1 = Math.tan(Math.PI / 4 - B1 / 2) / Math.pow(((1 - Math.sqrt(e1) * Math.sin(B1)) / (1 + Math.sqrt(e1) * Math.sin(B1))), (Math.sqrt(e1) / 2));
+    var tb2 = Math.tan(Math.PI / 4 - B2 / 2) / Math.pow(((1 - Math.sqrt(e1) * Math.sin(B2)) / (1 + Math.sqrt(e1) * Math.sin(B1))), (Math.sqrt(e1) / 2));
+    var n = Math.log(mb1 / mb2, Math.E) / Math.log(tb1 / tb2, Math.E);
+    var f = mb1 / (n * Math.pow(tb1, n));
+    for (i = 0; i < N + 1; i++) {
+        for (j = 0; j < A[i].length - 1; j++) {
+            var x1 = A[i][j].x;
+            var y1 = A[i][j].y;
+            var x2 = A[i][j + 1].x;
+            var y2 = A[i][j + 1].y;
+            var r1 = a * f * Math.pow(Math.tan(Math.PI / 4 - (y1 * Math.PI / 180) / 2) / Math.pow(((1 - Math.sqrt(e1) * Math.sin(y1 * Math.PI / 180)) / (1 + Math.sqrt(e1) * Math.sin(y1 * Math.PI / 180))), (Math.sqrt(e1) / 2)), n);
+            var t1 = n * (x1 * Math.PI / 180 - L0);
+            var r2 = a * f * Math.pow(Math.tan(Math.PI / 4 - (y2 * Math.PI / 180) / 2) / Math.pow(((1 - Math.sqrt(e1) * Math.sin(y2 * Math.PI / 180)) / (1 + Math.sqrt(e1) * Math.sin(y2 * Math.PI / 180))), (Math.sqrt(e1) / 2)), n);
+            var t2 = n * (x2 * Math.PI / 180 - L0);
+            var xx1 = a * f - r1 * Math.cos(t1);
+            var yy1 = r1 * Math.sin(t1);
+            var xx2 = a * f - r2 * Math.cos(t2);
+            var yy2 = r2 * Math.sin(t2);
+            cxt.moveTo(yy1 * 0.0001 + 500, 640 - xx1 * 0.0001);
+            cxt.lineTo(yy2 * 0.0001 + 500, 640 - xx2 * 0.0001);
+        }
+    }
+    cxt.stroke();
+}
+//求点到直线MN距离
+function distant(M,N)
+        {
+            var xM = M.x, yM = M.y, xN = N.x, yN = N.y;
+            var temp = Math.Sqrt(Math.Pow(yM - yN, 2) + Math.Pow(xM - xN, 2));
+            var A = (yM - yN) / temp;
+            var B = (xN - xM) / temp;
+            var C = (xM * yN - xN * yM) / temp;
+            return Math.Abs(A * point.x + B * point.y + C);
+        }
+//判断曲线是否为闭合曲线
+function isCircle(points)
+        {
+            if(points[0].X==points[points.Length-1].X && points[0].Y==points[points.Length-1].Y)
+            {
+                return true;
+            }
+            return false;
+        }
+        //求两点距离
+function distanceOfTwoPoints( point1, point2)
+        {
+            return Math.Sqrt(Math.Pow(point1.x - point2.x, 2) + Math.Pow(point1.y - point2.y, 2));
+        }
+        //切断闭合曲线，返回切点的索引
+        //道格拉斯-普克迭代函数
+function Compress(){
+    //压缩率为50%时，阈值为950
+    confirm("压缩成功")
+    var xM = M.x, yM = M.y, xN = N.x, yN = N.y;
+            var temp = Math.Sqrt(Math.Pow(yM - yN, 2) + Math.Pow(xM - xN, 2));
+            var A = (yM - yN) / temp;
+            var B = (xN - xM) / temp;
+            var C = (xM * yN - xN * yM) / temp;
+            return Math.Abs(A * point.x + B * point.y + C);
+    if(points[0].X==points[points.Length-1].X && points[0].Y==points[points.Length-1].Y)
+            {
+                return true;
+            }
+            return false;
+    Math.Sqrt(Math.Pow(point1.x - point2.x, 2) + Math.Pow(point1.y - point2.y, 2));
+}
+</script>
+
+</head>
+
+</html>

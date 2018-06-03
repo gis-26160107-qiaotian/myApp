@@ -1,0 +1,937 @@
+<head>
+        <title>polygon</title>
+        <style type="text/css">
+          body
+          {
+              padding:0;
+              margin: 0;
+          }
+          #head
+          {
+              background-color:black;
+              color:white;
+              text-align:center;
+              padding:5px;
+              height: 100px;
+          }
+          #nav
+          {
+            line-height:30px;
+            background-color:#eeeeee;
+            height:1000px;
+            width:200px;
+            float:left;
+            padding:5px;
+          }
+          #ditukuang
+          {
+              height: 400px;
+              width: 55%;
+              float: left;
+              border-width:0px;
+              margin-left:50px;
+          }
+    
+          #biaolan
+          {
+            height: 600px;
+              width: 55%;
+              float: left;
+              margin-left:5px;
+              border-style:solid;
+              border-width:1px;
+              border-color:rgb(0, 0, 0);
+              margin:0;
+          }
+    
+          #biao1
+          {
+              height: 200px;
+              width: 100%;
+              border-width:0px;
+              margin-left:5px;
+              border-style:solid;
+              border-color:rgb(0, 0, 0);
+              margin:0;
+          }
+          #biao2
+          {
+            height: 200px;
+              width: 100%;
+              border-width:0px;
+              margin-left:5px;
+              border-style:solid;
+              border-color:rgb(0, 0, 0);
+              margin:0;
+          }
+          #biao3
+          {
+            height: 200px;
+              width: 100%;
+              border-width:0px;
+              margin-left:5px;
+              border-style:solid;
+              border-color:rgb(0, 0, 0);
+              margin:2px;
+          }
+           #biaotilan{margin:2px;text-align:center;}
+           #ditukuang{border-style:solid;border-width:1px;border-color:rgb(0, 0, 0);margin:2px;}
+           h2:hover{text-decoration:underline;color:Black;}
+          
+         
+         
+    
+    
+    
+      </style>
+        <script type="text/javascript">
+        var adress;
+        var line1= new line();
+        var file_first;
+        var file_second;
+        var map1=new map();
+        var map2=new map();
+        // var dayuanline=new line();                    
+        // var map3=new map();
+        var Polygon1= new Polygon();
+        function point(id,x,y)
+        {
+            this.id=id;
+            this.x=x;
+            this.y=y;
+        }                               
+        
+        function line(points,id)
+        {
+           var i=0;
+           this.id=id;
+           this.points = new Array(20);
+           for (;i<20;i++)
+           {
+              this.points[i]= new point();
+           }
+        }                             
+          //线结构
+        function map(lines)
+        {
+           this.lines= new Array(30);
+           var k=0;
+        for(;k<30;k++)
+        {
+            this.lines[k]=new line();
+        }
+        }
+        //以上是读取数据所用到的数据存储结构
+        function node(id,x,y)       //节点结构
+        {
+           this.id=id;
+           this.x=x;
+           this.y=y;
+        }
+        function arc(id,HeadNode,EndNode,data,Direction,Direction2,LeftPolyID,RightPolyID,UseTime)
+        {
+           this.id=id;
+           this.HeadNode=new node();    //起始结点
+           this.EndNode=new node();     //终止结点
+           this.data= new Array(50);      //中间数据点，包括起始终点结点
+           for(var i=0;i<50;i++)
+           {
+              this.data[i]=new point();
+           }
+           this.Direction=Direction;    //从起点开始的与X轴的正向夹角
+           this.Direction=Direction;    //从末尾点开始的的夹角
+           this.LeftPolyID=-1;         //左多边形ID号
+           this.RightPolyID=-1;        //右多边形ID号
+           this.UseTime=UseTime;//弧段使用次数,0代表未使用过，1代表使用了从HeadNode开始的弧段，2代表使用了从EndNode开始的方向，3代表使用了两次
+        }
+        function Polygon(id,ArcPart,ArcPart2,Boundary,ArcPartArea,ArcPartArea2,Area)
+        {
+           this.id=id;
+           this.ArcPart=new Array();
+           this.ArcPart2=new Array();
+           this.Boundary=new Array(50);
+           for(var i=0;i<50;i++)
+           {
+              this.Boundary[i]=new arc();
+           }
+           this.ArcPartArea=0;
+           this.ArcPartArea2=0;
+           this.area=0;
+        }
+        //以上所有的数据结构定义完成。多边形-弧段-结点
+      function readText(canvas_id) {
+      //alert(111);
+      if(canvas_id==1)
+      var file=document.getElementById("file").files[0];
+      else if(canvas_id==2)
+      var file=document.getElementById("file2").files[0];
+      var reader=new FileReader();
+      var i=0;
+      reader.readAsText(file);
+      reader.onload=function(data)
+      {
+        var num=0;
+        var j=-5;
+        var flag=0;
+        var number_lines=-1;
+        var biaozhi=0;
+       while(this.result[j+1]!='E'||this.result[j+6]!='E')   //文件没有结束
+       {
+        var a=0;
+        j=j+4;
+        i=0;
+        number_lines++;
+        flag=0;
+        while(line1.points[a].id!=null)
+        {
+          line1.points[a].id=null;
+          line1.points[a].x=null;
+   
+          line1.points[a].y=null;
+          a++;
+        }
+       while(this.result[j+1]!='E')
+        {
+          var a="";
+          j++;
+          while(this.result[j]!='\n'&&this.result[j]!='E'&&this.result[j]!=',')
+          {
+            a=a+this.result[j];
+            j++;
+            biaozhi=1;             //确定读到数
+          }
+          if(biaozhi==1)
+          {
+          if(flag==0)
+          {
+          line1.points[i].id=a;
+                map1.lines[number_lines].id=a;
+          }
+          else if(flag==1)
+          {
+          line1.points[i].x=a;
+                map1.lines[number_lines].points[i].x=a;
+          }
+          else if(flag==2)
+          {         
+          line1.points[i].y=a;
+                map1.lines[number_lines].points[i].y=a;
+          flag=0;
+          i++;
+          }
+          flag++;
+          biaozhi=0;
+          }
+         // num=num+6;
+        }
+       }
+       number=0;
+       i=0;
+       while(map1.lines[number].id!=null)
+      {
+        i=0;
+        map2.lines[number].id=map1.lines[number].id;
+      while(map1.lines[number].points[i].x!=null)
+      {
+         map2.lines[number].points[i].id=map1.lines[number].points[i].id;
+         map2.lines[number].points[i].x=map1.lines[number].points[i].x;
+         map2.lines[number].points[i].y=map1.lines[number].points[i].y;                          //复制原有的数据，不影响下一次投影
+         i++;
+      }
+      //element.appendChild(canvas);
+      number++;
+      }
+      draw();
+      console.log(111);
+      var NodeData= new Array(30);
+    for(var i=0;i<30;i++)
+    NodeData[i]= new node();
+      CalNode(NodeData);
+      var ArcData= new Array(30);
+      for(var i=0;i<30;i++)
+    ArcData[i]= new arc();
+    CalArc(NodeData,ArcData);
+      }    
+    }
+    //生成结点or节点信息
+    function CalNode(NodeData)
+    {
+    var i=0;
+    var k=0;
+    // var num=0;
+    // var NodeData= new Array(30);
+    // for(var i=0;i<30;i++)
+    // NodeData[i]= new node();
+       var firstline=new line();
+       firstline=map1.lines[0];                        //把第一行的数据读入数组firstline
+       var IDNum = 1;
+       var FirstPoint=new point();                              //取出弧段中的第一个点
+       var EndPoint=new point();                        //取出弧段中的最后一个点
+       //遍历map数组中存储的每一条线
+       while(map1.lines[i].id)
+       {
+           while(map1.lines[i].points[k].x)
+                         k++;
+                         k--;
+        FirstPoint=map1.lines[i].points[0];   //取出每条线的第一个点
+        EndPoint=map1.lines[i].points[k];     //取出每条线的最后一个点
+        var NewNode1=new node(IDNum, FirstPoint.x, FirstPoint.y);
+        var NewNode2 = new node(IDNum, EndPoint.x, EndPoint.y);//可以暂时不考虑ID号
+        if (NodeData == null)//结点数据区域为空的情况
+                {
+                    // NodeData.Add(new Node(IDNum,FirstPoint[0], FirstPoint[1]));
+                    NodeData[IDNum-1].id=IDNum;
+                    NodeData[IDNum-1].x=FirstPoint.x;
+                    NodeData[IDNum-1].y=FirstPoint.y;
+                    IDNum++;
+                }
+                
+                if(!InNodes(NewNode1,NodeData))//说明NewNode1不在NodeData中，可以放入结点泛型中
+                {
+                    NewNode1.id= IDNum;
+                    // NodeData.Add(NewNode1);
+                    NodeData[IDNum-1].id=NewNode1.id;
+                    NodeData[IDNum-1].x=NewNode1.x;
+                    NodeData[IDNum-1].y=NewNode1.y;
+                    IDNum++;
+                }
+                if (!InNodes(NewNode2, NodeData))//说明NewNode2不在NodeData中，可以放入结点泛型中
+                {
+                    NewNode2.id= IDNum;
+                    // NodeData.Add(NewNode1);
+                    NodeData[IDNum-1].id=NewNode2.id;
+                    NodeData[IDNum-1].x=NewNode2.x;
+                    NodeData[IDNum-1].y=NewNode2.y;
+                    IDNum++;
+                }
+                i++;
+       }
+    }
+    function InNodes(Node1,Nodes)
+    {
+        var TempNode=new node();
+        var i=0;
+        while(Nodes[i].id)                         //遍历数组NodeData
+            {
+                TempNode=Nodes[i];
+                if (IsOneNode(Node1, TempNode))
+                    return 1;
+                    i++;
+            }
+            return 0;
+    }
+    function IsOneNode(Node1,Node2)
+    {
+        var MaxError = 0.01;   //误差为0.01
+        var dis=0;
+        dis=Math.sqrt(Math.pow(Node1.x- Node2.x,2) + Math.pow(Node1.y - Node2.y,2));
+        if (dis > MaxError)
+                return 0;
+            else
+                return 1;
+    }
+    function CalArc(NodeData,ArcData)
+    {
+        var IDNum = 1;
+        var OneLine=new line();
+        var i=0;
+        while(map1.lines[i].id)      //遍历数据中的每一条线
+        {
+          var NewArc = new arc();
+          OneLine=map1.lines[i];
+          NewArc.id=IDNum;
+        var k=0;
+        while(map1.lines[i].points[k].x)
+        k++;
+        if(k<=1)
+                    continue;
+        FirstPoint=map1.lines[i].points[0];   //取出每条线的第一个点
+        EndPoint=map1.lines[i].points[k-1];     //取出每条线的最后一个点
+        var NewNode1=new node(0, FirstPoint.x, FirstPoint.y);
+        var NewNode2 = new node(0, EndPoint.x, EndPoint.y);
+        
+        var HeadNode = new node();                    //在结点表中找到制定的点
+        HeadNode= FindNode(NewNode1, NodeData);
+        var EndNode=new node();
+        EndNode = FindNode(NewNode2, NodeData);
+        if (HeadNode != null)                          //判断有没有找到指定点
+                    NewArc.HeadNode = HeadNode;
+                else
+                    continue;
+                if (EndNode != null)
+                    NewArc.EndNode = EndNode;
+                else
+                    continue;
+                var onepoint = new point();
+                k=0;
+                while(OneLine.points[k].x)
+                {
+                    onepoint=OneLine.points[k];
+                    var k1=0;
+                    while(NewArc.data[k1].x)
+                    k1++;
+                    NewArc.data[k1]=onepoint;
+                    k++;
+                }
+                var SecPoint= new point();
+                var PointBySec=new point();
+                k=0;
+                SecPoint=OneLine.points[1];
+                while(OneLine.points[k].x)
+                    k++;
+                k=k-2;
+                PointBySec=OneLine.points[k];
+                NewArc.Direction=CalDirection(FirstPoint,SecPoint);
+                NewArc.Direction2 = CalDirection(EndPoint, PointBySec);
+                NewArc.UseTime=0;
+                IDNum++;
+                k=0;
+                while(ArcData[k].data[0].x)
+                k++;
+                ArcData[k]=NewArc;
+                i++;
+        }
+        var AllPoly = new Array(30);
+        var i=0;
+        for(i=0;i<30;i++)
+            AllPoly[i]=new Polygon();
+        CreatePoly(NodeData, ArcData, AllPoly);
+        
+    }
+    function FindNode(Node1,Nodes)
+    {
+           var i=0;
+           var onenode=new node();
+           while(Nodes[i].x)
+           {
+            onenode=Nodes[i];
+            if (IsOneNode(Node1, onenode))
+                    return onenode;
+            i++;
+           }
+           return null;
+    }
+    function CalDirection(pt1,pt2)
+    {
+        var dx = pt2.x - pt1.x;
+        var dy=pt2.y-pt1.y;
+        if(dx==0)
+            {
+                if (dy >= 0)
+                    return Math.PI / 2.0;
+                else
+                    return Math.PI * 3.0 / 2.0;
+            }
+            else
+            {
+                if (dx > 0 & dy >= 0)
+                    return Math.atan(Math.abs(dy / dx));
+                else if(dx<0&dy>=0)
+                    return Math.PI - Math.atan(Math.abs(dy / dx));
+                else if(dx<0&dy<=0)
+                    return Math.PI + Math.atan(Math.abs(dy / dx));
+                else
+                    return Math.PI *2.0- Math.atan(Math.abs(dy / dx));
+            }
+    }
+    function CreatePoly(AllNode, AllArc, AllPoly)
+    {
+        // double CurrentDirection = 0d;
+        var CurrentDirection=0;
+        //     int PolyID = 1;
+        var PolyID=1;
+        var onenode = new node();
+        var i =0;
+        while(AllNode[i].x)                    //第一步：顺序取一个结点作为起始结点
+        {
+            onenode=AllNode[i];
+            CurrentDirection=-0.001;
+            var NextArc= new arc();
+            NextArc = FindFirstArc(onenode, AllArc, CurrentDirection,-1);
+            var CurrentNode=new node();
+            var NewPoly=new Polygon();
+            while(NextArc!=null)                 //第二步找到这个结点关联的弧段集合中的本条弧段的下一条弧段
+            {
+               NewPoly.ArcPart[NewPoly.ArcPart.length]=(NextArc[0] * NextArc[1]);
+               if (AllArc[NextArc[1]-1].UseTime == 0)//设置访问次数
+                        {
+                            if (NextArc[0] == 1) //正方向被使用
+                                AllArc[NextArc[1]-1].UseTime = 1;
+                            else
+                                AllArc[NextArc[1]-1].UseTime = 2;
+                        }
+                else if (AllArc[NextArc[1]-1].UseTime < 3)
+                        AllArc[NextArc[1]-1].UseTime = 3;
+                         //设置当前Node的指向和方向
+                if (NextArc[0] == 1)//正向
+                    {
+                        CurrentNode = AllArc[NextArc[1]-1].EndNode;
+                        CurrentDirection = AllArc[NextArc[1]-1].Direction2;//修改方向
+                    }
+                else //反向
+                    {
+                        CurrentNode = AllArc[NextArc[1]-1].HeadNode;
+                        CurrentDirection = AllArc[NextArc[1]-1].Direction;//修改方向
+                    }
+                                 //判断是否闭合形成多边形，如果是，加入多边形泛型中
+                    if (CurrentNode.id == onenode.id)
+                    {
+                        var NewPoly2 = new Polygon();
+                        NewPoly2.id= PolyID;
+                        PolyID++;
+                        // NewPoly2.ArcPart = NewPoly.ArcPart.Clone();
+                        NewPoly2.ArcPart = NewPoly.ArcPart
+                        // var a=0;
+                        // while(AllPoly[a].)
+                        var a=0;
+                        // var a1=0;
+                        while(AllPoly[a].id)
+                        a++;
+                        // AllPoly.Add(NewPoly2);//记录多边形
+                        AllPoly[a].ArcPart=NewPoly2.ArcPart.concat();
+                        AllPoly[a].ArcPart2=NewPoly2.ArcPart2.concat();
+                        AllPoly[a].Boundary=NewPoly2.Boundary.concat();
+                        AllPoly[a].ArcPartArea=NewPoly2.ArcPartArea;
+                        AllPoly[a].ArcPartArea2=NewPoly2.ArcPartArea2;
+                        AllPoly[a].area=NewPoly2.area;
+                        AllPoly[a].id=NewPoly2.id;
+                        // NewPoly.ArcPart.Clear();//清空NewPoly里面的弧段信息
+                        NewPoly.ArcPart.splice(0,NewPoly.ArcPart.length);//清空数组
+                        if (AllArc[NextArc[1]-1].UseTime == 3)//该弧段使用了两次，转第一步
+                            break;
+                        else  //转第二步
+                        {
+                            NextArc[0] = -1*NextArc[0];//掉头
+                            if(NextArc[0]==-1)
+                                CurrentDirection=AllArc[NextArc[1]-1].Direction2;
+                            else
+                                CurrentDirection=AllArc[NextArc[1]-1].Direction;
+                            continue;
+                        }
+                    }
+                    NextArc = FindFirstArc(CurrentNode, AllArc, CurrentDirection,NextArc[1]);//寻找下一个弧段
+            }
+            i++;
+        }
+        IsLand(AllPoly, AllArc);   //消除多边形内部岛的影响
+        //输出节点表
+        var h=0;
+        var j=0;
+        while(AllNode[h].id)
+        {
+            j=h+1;
+            document.getElementById("biao1").innerHTML+="节点"+j+":"+" "+"x:"+AllNode[h].x+" "+"y:"+AllNode[h].y+"<br/>"
+            h++;
+        }
+        //输出弧段表
+        h=0;
+        j=0;
+        while(AllArc[h].id)
+        {
+            j=h+1;
+            document.getElementById("biao2").innerHTML+="弧"+j+":"+" "+"首 x:"+AllArc[h].HeadNode.x+" "+"y:"+AllArc[h].HeadNode.y+"尾:"+AllArc[h].EndNode.x+" "+"y:"+AllArc[h].EndNode.y+"<br/>"
+            h++;
+        }
+        //输出多边形表
+        h=0;
+        j=0;
+        while(AllPoly[h].ArcPart[0])
+        {
+            j=h+1;
+            var o=0;
+            document.getElementById("biao3").innerHTML+="多边形"+j+":"+" ";
+            while(AllPoly[h].ArcPart[o])
+            {
+                document.getElementById("biao3").innerHTML+=AllPoly[h].ArcPart[o]+" ";
+                o++;
+            }
+            document.getElementById("biao3").innerHTML+="<br/>"
+            h++;
+        }
+        
+    }
+     function FindFirstArc(onenode,AllArc,Direction,CurrentArcID)
+    {
+        // List<double[]> Temp = new List<double[]>();//临时数据，一层泛型中第一个元素存放Arc的ID，第二个存放Direction，第三个存放方向（-1,1)
+        var Temp=[];
+        // var i=0;
+        // for(i=0;i<30;i++)
+        // Temp[i]=[];
+        var ReturnData=new Array(2);
+        ReturnData[0]=0;
+        ReturnData[1]=0;
+        var OneArc=new arc();
+        i=0;
+        while(AllArc[i].id)
+        {
+            OneArc=AllArc[i];
+            i++;
+            if(OneArc.HeadNode.id==onenode.id&OneArc.id!=CurrentArcID)   //必须是当前arc以外的
+            {
+                if(OneArc.UseTime<3&OneArc.UseTime!=1)//和起始点相同此时需要保证该弧段正方向没有使用过
+                       {
+                           var OneTemp=[];
+                           OneTemp[2] = 1;//正方向
+                           OneTemp[1] = OneArc.Direction;
+                           OneTemp[0] = OneArc.id;
+                           var k=Temp.length;
+                           Temp[k]=OneTemp;
+                      }
+                       continue;
+            }
+            if (OneArc.EndNode.id == onenode.id&OneArc.id!=CurrentArcID)
+                   {
+                       if (OneArc.UseTime<3&OneArc.UseTime!=2)//和终点相同此时需要保证该弧段负方向没有使用过
+                       {
+                           var OneTemp=[];
+                           OneTemp[2] = -1;//负方向
+                           OneTemp[1] = OneArc.Direction2;
+                           OneTemp[0] = OneArc.id;
+                        //    while(Temp[k])
+                        //    k++;
+                           Temp[Temp.length]=OneTemp;
+                       }
+                   }
+        }
+       if(Temp.length==0)          //说明没有找到这个点
+         return null;
+      var flag=0;
+      var MinDirection=0;
+      var OneTemp=[];
+      var j=0;
+      for(j=0;j<Temp.length;j++)
+      {
+        OneTemp=Temp[j];
+        if(flag)
+                {
+                    if(OneTemp[1]>Direction&OneTemp[1]<MinDirection)
+                    {
+                        MinDirection = OneTemp[1];
+                        ReturnData[0] =OneTemp[2];//正负方向
+                        ReturnData[1] =OneTemp[0];//ID号
+                    }
+                }
+                else
+                {
+                    if(OneTemp[1]>Direction)
+                    {
+                        MinDirection = OneTemp[1];
+                        ReturnData[0] = OneTemp[2];//正负方向
+                        ReturnData[1] = OneTemp[0];//ID号
+                        flag = true;
+                    }
+                }
+      }
+      MinDirection=9999999;
+    
+            if(!flag)//说明Direction的方向最大，则需要找到Temp里面方向最小的
+            {
+                j=0;
+                 for(j=0;j<Temp.length;j++)
+                 {
+                     OneTemp=Temp[j];
+                     if(MinDirection>OneTemp[1])
+                     {
+                         MinDirection = OneTemp[1];
+                         ReturnData[0] =OneTemp[2];//正负方向
+                         ReturnData[1] =OneTemp[0];//ID号
+                     }
+                 }
+            }
+            return ReturnData;
+    }
+    function IsLand(AllPolygon, AllArc)
+    {
+        var PosPoly = [];
+        // var i=0;
+        // for(i=0;i<30;i++)
+        // PosPoly[i]=new Polygon();                     
+        //面积为正的多边形的集合
+        var NegPoly = [];
+        // var i=0;
+        // for(i=0;i<30;i++)
+        // NegPoly[i]=new Polygon();                     
+        //面积为正的多边形的集合
+        var Poly = new Polygon();
+        i=0;
+        while(AllPolygon[i].id)
+        {
+            Poly=AllPolygon[i];
+            var Area=CalArea(AllArc, Poly);
+            if(Area>0)
+            {
+                Poly.ArcPartArea=Area;
+                Poly.area=Area;
+                PosPoly[PosPoly.length]=Poly;
+            }
+            else
+                 {
+                     Poly.ArcPartArea = Area;
+                     NegPoly[NegPoly.length]=Poly;
+                 }
+                 i++;
+        }
+        var DeletePoly = [];
+        if (NegPoly.length>=2)
+        {
+            for (var i=0; i<NegPoly.length;i++)
+            {
+                var TmpPoly1 = new Polygon();
+                TmpPoly1=NegPoly[i];
+                var TmpPoly2 = new Polygon();
+                var k=0;
+                while(PosPoly[k])
+                {
+                    TmpPoly2=PosPoly[k];
+                    if(TmpPoly2.area<=Math.abs(TmpPoly1.area))
+                    continue;
+                    else if(ContainPoly(TmpPoly1, TmpPoly2, AllArc))
+                    {
+                        // TmpPoly2.ArcPart2=TmpPoly2.ArcPart2.concat(TmpPoly1.ArcPart);
+                        var n = 0;
+                        for(;n<TmpPoly1.ArcPart.length;n++)
+                        {
+                            TmpPoly2.ArcPart2[TmpPoly2.ArcPart2.length]=TmpPoly1.ArcPart[n];
+                        }
+                            TmpPoly2.area = TmpPoly2.area + TmpPoly1.ArcPartArea;
+                            TmpPoly2.ArcPartArea2 = TmpPoly2.ArcPartArea2 + TmpPoly1.ArcPartArea;
+                            DeletePoly[DeletePoly.length]=TmpPoly1;
+                    }
+                   k++;
+                }
+            }
+        }
+        var TmpPoly= new Polygon();
+        var s=0;
+        for(;s<DeletePoly.length;s++)
+        {
+            TmpPoly  = DeletePoly[s];
+            var d=0;
+            for(d=NegPoly.length-1;d>=0;d--)
+            {
+                if(NegPoly[d]==TmpPoly)
+                  NegPoly.splice(d,1);         //删除NegPloy中和DeletePoly相同的多边形
+            }
+        }
+        AllPolygon.splice(0,AllPolygon.length);
+        for(s=0;s<PosPoly.length;s++)
+        {
+            AllPolygon[AllPolygon.length]=PosPoly[s];
+        }
+        for(s=0;s<NegPoly.length;s++)
+        {
+            AllPolygon[AllPolygon.length]=NegPoly[s];
+        }
+        //     foreach (Polygon TmpPoly in PosPoly)
+        //         AllPolygon.Add(TmpPoly);
+        //     foreach (Polygon TmpPoly in NegPoly)
+        //         AllPolygon.Add(TmpPoly);
+    }
+    
+        function  CalArea(AllArc,OnePolygon)//计算一个Polygon的面积
+        {
+            // List<point> AllPt = new List<point>();//存放所有数据点
+            var AllPt =[];
+            // var i=0;
+            // for(;i<30;i++)
+            //    AllPt[i] = new point();                //存放所有的数据点
+            // double Area = 0d;
+            var Area=0;
+            var one = 0;
+            i=0;
+            while(OnePolygon.ArcPart[i])
+            {
+               one = OnePolygon.ArcPart[i];
+               if(one>0)     //说明该ARC是正方向
+               {
+                      var b1=0;
+                    //   for(;b1<one-1;b1++)
+                    //     AllPt[AllPt.length]=AllArc[b1].data
+                    while(AllArc[one-1].data[b1].x)
+                    {
+                        AllPt[AllPt.length]=AllArc[one-1].data[b1];
+                        b1++;
+                    }
+               }
+               else if(one<0)//说明该ARC是负方向
+               {
+                    var one2=Math.abs(one);
+                    var b2=0;
+                    while(AllArc[one2-1].data[b2].x)
+                    b2++;
+                    b2--;
+                    for(var i2=b2;i2>=0;i2--)
+                    {
+                        var pt = new point(0,AllArc[one2-1].data[i2].x,AllArc[one2-1].data[i2].y);
+                        AllPt[AllPt.length]=pt;
+                    }
+                    // for(int i=AllArc[One2-1].data.Count-1;i>=0;i--)//没有使用Reverse函数是因为该函数会对原始数据产生影响
+                    // {
+                    //     point Pt = new point(AllArc[One2-1].data[i].X,AllArc[One2-1].data[i].Y);
+                    //     AllPt.Add(Pt);
+                    // }
+               }
+               i++;
+            }
+            for(var i=0;i<AllPt.length-1;i++)
+            {
+                var pt1 =new point();
+                pt1=AllPt[i];
+                var pt2=new point();
+                pt2=AllPt[i+1];
+                Area += 0.5 * (parseFloat(pt2.y) + parseFloat(pt1.y)) * (parseFloat(pt2.x) - parseFloat(pt1.x));
+            }
+            return Area;
+        }
+        function ContainPoly(Poly1,Poly2, AllArc)
+        {
+            // List<point> Poly1Pts = ReturnPts(AllArc, Poly1.ArcPart);
+            // List<point> Poly2Pts = ReturnPts(AllArc, Poly2.ArcPart);
+            // foreach(point pt in Poly1Pts)
+            //     if (!PnPoly(pt, Poly2Pts))
+            //         return false;
+            var Poly1Pts=[];
+            Poly1Pts=ReturnPts(AllArc, Poly1);
+            var Poly2Pts=[];
+            Poly2Pts=ReturnPts(AllArc, Poly2);
+            var i=0;
+            var pt = new point();
+            for(;i<Poly1Pts.length;i++)
+            {
+                pt = Poly1Pts[i];
+                if(!PnPoly(pt, Poly2Pts))
+                   return false;
+            }
+            return true;
+        }
+        function ReturnPts(AllArc, Poly2)
+        {
+            var AllPt =[];
+            Poly2.ArcPart;
+            var i=0;
+            var one =0;
+            for(i=0;i<Poly2.ArcPart.length;i++)
+            {
+               one = Poly2.ArcPart[i];
+               if(one >0)
+               {
+                       var a=0;
+                       var a2=0;
+                       while(AllArc[one - 1].data[a2].x)
+                      a2++;
+                       for(;a< a2;a++)
+                       {
+                        var pt = new point();
+                           pt=AllArc[one - 1].data[a];
+                        //    AllPt[AllPt.length].id=AllPt.length;
+                        //    AllPt[AllPt.length].x=pt.x;
+                        //    AllPt[AllPt.length].y=py.y;
+                        AllPt[AllPt.length]=pt;
+                       }
+               }
+               else if(one <0)
+               {
+                      var one2;
+                      var b=0;
+                      one2=Math.abs(one);
+                      while(AllArc[one2 - 1].data[b].x)
+                      b++;
+                      b--;
+                      for(;b>=0;b--)
+                      {
+                        var pt = new point();
+                        pt.id=0;
+                        pt.x=AllArc[one2 - 1].data[b].x;
+                        pt.y=AllArc[one2 - 1].data[b].y;
+                        // pt = (0,AllArc[one2 - 1].data[b].X, AllArc[one2 - 1].data[b].Y);
+                        AllPt[AllPt.length]=pt;
+                      }
+               }
+            }
+            return AllPt;
+        }
+        function PnPoly(pt, AllPt)
+        {
+            // bool flag = false;
+            // int i = 0, j = 0;
+            // int Num=AllPt.Count;
+            // for(i=0,j=Num-1;i<Num;j=i,i++)
+            // {
+            //     if((((AllPt[i].Y<=pt.Y)&(pt.Y<AllPt[j].Y))|
+            //         ((AllPt[j].Y<=pt.Y)&(pt.Y<AllPt[i].Y)))
+            //         &(pt.X<(AllPt[j].X-AllPt[i].X)*(pt.Y-AllPt[i].Y)/(AllPt[j].Y-AllPt[i].Y)+AllPt[i].X))
+            //         flag=!flag;
+            // }
+            // return flag;
+            var flag=false;
+            var i = 0;
+            var j = 0;
+            var num = AllPt.length;
+            for(i=0,j=num-1;i<num;j=i,i++)
+            {
+                if((((AllPt[i].y<=pt.y)&(pt.y<AllPt[j].y))|
+                    ((AllPt[j].y<=pt.y)&(pt.y<AllPt[i].y)))
+                    &(pt.x<(AllPt[j].x-AllPt[i].x)*(pt.y-AllPt[i].y)/(AllPt[j].y-AllPt[i].y)+parseFloat(AllPt[i].x))) 
+                    flag=!flag;
+            }
+            return flag;
+        }
+        function draw(){
+             var canvas=document.getElementById("myCanvas");
+             var ctx = canvas.getContext("2d");
+             var ctx = canvas.getContext("2d");
+             var number=0;
+             var i=0;
+             ctx.clearRect(0,0,canvas.clientWidth,canvas.clientHeight);
+             ctx.lineWidth=1;
+             ctx.beginPath();
+             number=0;
+             for(a=0;a<=canvas.clientWidth;a=a+60){
+                 ctx.moveTo(a,0);
+                 ctx.lineTo(a,canvas.clientHeight);
+                 ctx.strokeStyle="black"
+                 ctx.stroke();                    
+             }
+             for(a=0;a<=canvas.clientHeight;a=a+36){
+                 ctx.moveTo(0,a);
+                 ctx.lineTo(canvas.clientWidth,a);
+                 ctx.stroke();                   
+             }
+             ctx.closePath();
+  
+             number=0;
+             while(map1.lines[number].id!=null){
+                 i=0;
+                 while(map1.lines[number].points[i+1].x!=null){
+                     ctx.beginPath();
+                     ctx.strokeStyle="blue"
+                     ctx.lineWidth=1;   
+                     ctx.moveTo(map1.lines[number].points[i].x*2-20,(-map1.lines[number].points[i].y*2)+500);
+                     ctx.lineTo(map1.lines[number].points[i+1].x*2-20,(-map1.lines[number].points[i+1].y*2)+500);
+                     ctx.stroke();                    //stroke() 方法会实际地绘制出通过 moveTo() 和 lineTo() 方法定义的路径。默认颜色是黑色。
+                     i++;
+                     ctx.closePath();
+                 }
+      //element.appendChild(canvas);
+                 number++;
+             }
+         }
+</script>
+
+</head>
+<body >
+</br>
+         </br>
+     
+        
+     
+         <div id="nav">&nbsp;
+           <input type="file" id="file">
+           <br>
+           <br>
+           <input type="button" value="绘制" onclick="readText(1)"><br>
+      
+        </div>
+        <div id="ditukuang">
+        <canvas id="myCanvas" width="420" height="360" style="float:left;margin:20px;margin-left:25px;"></canvas>
+        </div>
